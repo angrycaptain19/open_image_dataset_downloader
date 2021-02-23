@@ -4,7 +4,7 @@ import re
 import numpy as np
 
 class_list = []
-color_dic = dict()
+color_dic = {}
 flag = 0
 
 def color_gen():

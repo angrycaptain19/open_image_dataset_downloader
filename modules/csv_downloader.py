@@ -18,8 +18,7 @@ def TTV(csv_dir, name_file, args_y):
     '''
     CSV = os.path.join(csv_dir, name_file)
     error_csv(name_file, csv_dir, args_y)
-    df_val = pd.read_csv(CSV)
-    return df_val
+    return pd.read_csv(CSV)
 
 def error_csv(file, csv_dir, args_y):
     '''
@@ -29,27 +28,28 @@ def error_csv(file, csv_dir, args_y):
     :param csv_dir: folder of the .csv files
     :return: None
     '''
-    if not os.path.isfile(os.path.join(csv_dir, file)):
-        print(bc.FAIL + "Missing the {} file.".format(os.path.basename(file)) + bc.ENDC)
-        if args_y:
-            ans = 'y'
-            print(bc.OKBLUE + "Automatic download." + bc.ENDC)
+    if os.path.isfile(os.path.join(csv_dir, file)):
+        return
+    print(bc.FAIL + "Missing the {} file.".format(os.path.basename(file)) + bc.ENDC)
+    if args_y:
+        ans = 'y'
+        print(bc.OKBLUE + "Automatic download." + bc.ENDC)
+    else:
+        ans = input(bc.OKBLUE + "Do you want to download the missing file? [Y/n] " + bc.ENDC)
+
+    if ans.lower() == 'y':
+        folder = str(os.path.basename(file)).split('-')[0]
+        if folder != 'class':
+            FILE_URL = str(OID_URL + folder + '/' + file)
         else:
-            ans = input(bc.OKBLUE + "Do you want to download the missing file? [Y/n] " + bc.ENDC)
+            FILE_URL = str(OID_URL + file)
 
-        if ans.lower() == 'y':
-            folder = str(os.path.basename(file)).split('-')[0]
-            if folder != 'class':
-                FILE_URL = str(OID_URL + folder + '/' + file)
-            else:
-                FILE_URL = str(OID_URL + file)
+        FILE_PATH = os.path.join(csv_dir, file)
+        save(FILE_URL, FILE_PATH)
+        print('\n' + bc.OKBLUE + "File {} downloaded into {}.".format(file, FILE_PATH) + bc.ENDC)
 
-            FILE_PATH = os.path.join(csv_dir, file)
-            save(FILE_URL, FILE_PATH)
-            print('\n' + bc.OKBLUE + "File {} downloaded into {}.".format(file, FILE_PATH) + bc.ENDC)
-
-        else:
-            exit(1)
+    else:
+        exit(1)
 
 def save(url, filename):
     '''

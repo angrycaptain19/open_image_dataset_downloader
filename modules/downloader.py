@@ -42,11 +42,7 @@ def download(args, df_val, folder, dataset_dir, class_name, class_code, class_li
         print(bc.INFO + 'Limiting to {} images.'.format(args.limit) + bc.ENDC)
         images_list = set(itertools.islice(images_list, args.limit))
 
-    if class_list is not None:
-        class_name_list = '_'.join(class_list)
-    else:
-        class_name_list = class_name
-
+    class_name_list = class_name if class_list is None else '_'.join(class_list)
     download_img(folder, dataset_dir, class_name_list, images_list, threads)
     if not args.sub:
         get_label(folder, dataset_dir, class_name, class_code, df_val, class_name_list, args)
@@ -69,7 +65,7 @@ def download_img(folder, dataset_dir, class_name, images_list, threads):
 
     pool = ThreadPool(threads)
 
-    if len(images_list) > 0:
+    if images_list:
         print(bc.INFO + 'Download of {} images in {}.'.format(len(images_list), folder) + bc.ENDC)
         commands = []
         for image in images_list:
@@ -97,43 +93,41 @@ def get_label(folder, dataset_dir, class_name, class_code, df_val, class_list, a
     :param class_list: list of the class if multiclasses is activated
     :return: None
     '''
-    if not args.noLabels:
-        print(bc.INFO + 'Creating labels for {} of {}.'.format(class_name, folder) + bc.ENDC)
+    if args.noLabels:
+        return
 
-        image_dir = folder
-        if class_list is not None:
-            download_dir = os.path.join(dataset_dir, image_dir, class_list)
-            label_dir = os.path.join(dataset_dir, folder, class_list, 'Label')
-        else:
-            download_dir = os.path.join(dataset_dir, image_dir, class_name)
-            label_dir = os.path.join(dataset_dir, folder, class_name, 'Label')
+    print(bc.INFO + 'Creating labels for {} of {}.'.format(class_name, folder) + bc.ENDC)
 
-        downloaded_images_list = [f.split('.')[0] for f in os.listdir(download_dir) if f.endswith('.jpg')]
-        images_label_list = list(set(downloaded_images_list))
+    image_dir = folder
+    if class_list is not None:
+        download_dir = os.path.join(dataset_dir, image_dir, class_list)
+        label_dir = os.path.join(dataset_dir, folder, class_list, 'Label')
+    else:
+        download_dir = os.path.join(dataset_dir, image_dir, class_name)
+        label_dir = os.path.join(dataset_dir, folder, class_name, 'Label')
 
-        groups = df_val[(df_val.LabelName == class_code)].groupby(df_val.ImageID)
-        for image in images_label_list:
-            try:
-                current_image_path = os.path.join(download_dir, image + '.jpg')
-                dataset_image = cv2.imread(current_image_path)
-                boxes = groups.get_group(image.split('.')[0])[['XMin', 'XMax', 'YMin', 'YMax']].values.tolist()
-                file_name = str(image.split('.')[0]) + '.txt'
-                file_path = os.path.join(label_dir, file_name)
-                if os.path.isfile(file_path):
-                    f = open(file_path, 'a')
-                else:
-                    f = open(file_path, 'w')
+    downloaded_images_list = [f.split('.')[0] for f in os.listdir(download_dir) if f.endswith('.jpg')]
+    images_label_list = list(set(downloaded_images_list))
 
-                for box in boxes:
-                    box[0] *= int(dataset_image.shape[1])
-                    box[1] *= int(dataset_image.shape[1])
-                    box[2] *= int(dataset_image.shape[0])
-                    box[3] *= int(dataset_image.shape[0])
+    groups = df_val[(df_val.LabelName == class_code)].groupby(df_val.ImageID)
+    for image in images_label_list:
+        try:
+            current_image_path = os.path.join(download_dir, image + '.jpg')
+            dataset_image = cv2.imread(current_image_path)
+            boxes = groups.get_group(image.split('.')[0])[['XMin', 'XMax', 'YMin', 'YMax']].values.tolist()
+            file_name = str(image.split('.')[0]) + '.txt'
+            file_path = os.path.join(label_dir, file_name)
+            f = open(file_path, 'a') if os.path.isfile(file_path) else open(file_path, 'w')
+            for box in boxes:
+                box[0] *= int(dataset_image.shape[1])
+                box[1] *= int(dataset_image.shape[1])
+                box[2] *= int(dataset_image.shape[0])
+                box[3] *= int(dataset_image.shape[0])
 
-                    # each row in a file is name of the class_name, XMin, YMin, XMax, YMax (left top right bottom)
-                    print(class_name, box[0], box[2], box[1], box[3], file=f)
+                # each row in a file is name of the class_name, XMin, YMin, XMax, YMax (left top right bottom)
+                print(class_name, box[0], box[2], box[1], box[3], file=f)
 
-            except Exception as e:
-                pass
+        except Exception as e:
+            pass
 
-        print(bc.INFO + 'Labels creation completed.' + bc.ENDC)
+    print(bc.INFO + 'Labels creation completed.' + bc.ENDC)

@@ -43,31 +43,31 @@ def mkdirs(Dataset_folder, csv_folder, classes, type_csv):
     '''
 
     directory_list = ['train', 'validation', 'test']
-    
-    if not type_csv == 'all':
-        for class_name in classes:
-            if not Dataset_folder.endswith('_nl'):
-                folder = os.path.join(Dataset_folder, type_csv, class_name, 'Label')
-            else:
-                folder = os.path.join(Dataset_folder, type_csv, class_name)
-            if not os.path.exists(folder):
-                os.makedirs(folder)
-            filelist = [f for f in os.listdir(folder) if f.endswith(".txt")]
-            for f in filelist:
-                os.remove(os.path.join(folder, f))
 
-    else:
+    if type_csv == 'all':
         for directory in directory_list:
             for class_name in classes:
-                if not Dataset_folder.endswith('_nl'):
-                    folder = os.path.join(Dataset_folder, directory, class_name, 'Label')
-                else:
+                if not Dataset_folder.endswith(
+                    '_nl'
+                ) or Dataset_folder.endswith('_nl'):
                     folder = os.path.join(Dataset_folder, directory, class_name, 'Label')
                 if not os.path.exists(folder):
                     os.makedirs(folder)
                 filelist = [f for f in os.listdir(folder) if f.endswith(".txt")]
                 for f in filelist:
                     os.remove(os.path.join(folder, f))
+
+    else:
+        for class_name in classes:
+            if Dataset_folder.endswith('_nl'):
+                folder = os.path.join(Dataset_folder, type_csv, class_name)
+            else:
+                folder = os.path.join(Dataset_folder, type_csv, class_name, 'Label')
+            if not os.path.exists(folder):
+                os.makedirs(folder)
+            filelist = [f for f in os.listdir(folder) if f.endswith(".txt")]
+            for f in filelist:
+                os.remove(os.path.join(folder, f))
 
     if not os.path.exists(csv_folder):
         os.makedirs(csv_folder)
